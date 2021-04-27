@@ -1,0 +1,53 @@
+package hw3;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+
+import minijava.parser.MiniJavaParser;
+import minijava.parser.ParseException;
+import minijava.syntaxtree.Goal;
+
+public class Typecheck {
+    public static void main(String[] args) {
+        try {
+            InputStream in = System.in;
+            if (args.length > 0)
+                in = new FileInputStream(args[0]);
+
+            // Parse the file.
+            MiniJavaParser parser = new MiniJavaParser(in);
+            Goal g = parser.Goal();
+
+            // NOTE: your code need not follow this template.
+            // It's just to get you started.
+
+            // Create class table
+            // ct = ...
+
+            // Build the class table
+            // g.accept(new ClassTableBuilder(ct), ...);
+
+            // Create the typing environment.
+            // env = ...
+            // Create the type map.
+            // typeMap = ...
+
+            // Type check.
+            // g.accept(new Typechecker(ct, typeMap), env);
+
+            System.out.println("Program ok");
+        }
+        catch (ParseException pe) {
+            System.out.println("Parse error: " + pe.getMessage());
+        }
+        catch (TypeError te) {
+            System.out.println("Type error: " + te.getMessage());
+        }
+        catch (FileNotFoundException e) {
+            System.out.println("IO error: " + e.getMessage());
+        }
+
+    }
+
+}
