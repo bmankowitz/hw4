@@ -29,6 +29,15 @@ public class TreeBuildingVisitor implements Visitor {
 //        System.out.println(vars);
 //        System.out.println(currentLocation);
     }
+    public void printVars(){
+        for(Map.Entry entry : vars.entrySet()){
+            System.out.println(entry.getKey() + ":");
+            for(Var var :(ArrayList<Var>) entry.getValue()){
+                System.out.println("\t" + var);
+            }
+            System.out.println();
+        }
+    }
     //
     // Auto class visitors--probably don't need to be overridden.
     //

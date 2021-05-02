@@ -12,7 +12,7 @@ public class Typecheck {
         try {
             InputStream in = System.in;
             if (args.length > 0) in = new FileInputStream(args[0]);
-        //    in = new FileInputStream("testPrograms/TreeVisitor-error.java");
+            in = new FileInputStream("testPrograms/Factorial.java");
             //TODO: OBJECTS!
             //TODO BinaryTree, LinkedList, TreeVisitor
 
@@ -21,6 +21,7 @@ public class Typecheck {
 		    System.out.println("Parsed successfully");
 		    TreeBuildingVisitor firstPass = new TreeBuildingVisitor();
 		    root.accept(firstPass);
+		    firstPass.printVars();
 		    TreeCheckingVisitor secondPass = new TreeCheckingVisitor(firstPass.vars);
 		    root.accept(secondPass);
 		    System.out.println("Program ok");
