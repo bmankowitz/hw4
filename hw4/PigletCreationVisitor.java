@@ -16,6 +16,8 @@ import minijava.visitor.Visitor;
 public class PigletCreationVisitor implements Visitor {
     //ArrayList<Var> varList;
     HashMap<Var, Integer> varHashMap = new HashMap<>();
+    StringBuilder output = new StringBuilder();
+    int level = 0;
     public PigletCreationVisitor(ArrayList<Var> varList){
         for (int i = 0; i < varList.size(); i++) {
             varHashMap.put(varList.get(i), i);
@@ -62,6 +64,7 @@ public class PigletCreationVisitor implements Visitor {
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
+        System.out.println(output.toString());
     }
 
     /**
@@ -87,6 +90,8 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(MainClass n) {
+        output.append("MAIN \n");
+        level++;
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
@@ -105,6 +110,8 @@ public class PigletCreationVisitor implements Visitor {
         n.f15.accept(this);
         n.f16.accept(this);
         n.f17.accept(this);
+        output.append("\nEND\n");
+        level--;
     }
 
     /**
@@ -193,6 +200,16 @@ public class PigletCreationVisitor implements Visitor {
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
+        int args = 0;
+        if (((FormalParameterList) n.f4.node).f0 != null) args++;
+        if (((FormalParameterList) n.f4.node).f1.nodes != null){
+            args += ((FormalParameterList) n.f4.node).f1.nodes.size();
+        }
+        if (n.f7.nodes != null){
+            args += n.f7.nodes.size();
+        }
+        output.append(n.f2.f0.tokenImage).append("[ ")
+                .append(args).append(" ]").append("\nBEGIN");
         n.f3.accept(this);
         n.f4.accept(this);
         n.f5.accept(this);
@@ -200,8 +217,11 @@ public class PigletCreationVisitor implements Visitor {
         n.f7.accept(this);
         n.f8.accept(this);
         n.f9.accept(this);
+        output.append(" RETURN ");
         n.f10.accept(this);
+        output.append(((Identifier)((PrimaryExpression) n.f10.f0.choice).f0.choice).f0.tokenImage);
         n.f11.accept(this);
+        output.append(" END");
         n.f12.accept(this);
     }
 
@@ -392,6 +412,7 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(PrintStatement n) {
+        output.append("PRINT ");
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
