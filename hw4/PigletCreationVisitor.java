@@ -14,11 +14,15 @@ import minijava.visitor.Visitor;
  * order.  Your visitors may extend this class.
  */
 public class PigletCreationVisitor implements Visitor {
-    //ArrayList<Var> varList;
+    ArrayList<Var> varList;
     HashMap<Var, Integer> varHashMap = new HashMap<>();
     StringBuilder output = new StringBuilder();
+    LinkedList<String> currentLocation = new LinkedList<>();
+    int labelNumber = 1;
+
     int level = 0;
     public PigletCreationVisitor(ArrayList<Var> varList){
+        this.varList = varList;
         for (int i = 0; i < varList.size(); i++) {
             varHashMap.put(varList.get(i), i);
         }
@@ -27,6 +31,21 @@ public class PigletCreationVisitor implements Visitor {
         System.out.println("------------------------------------------------------------------------------------");
         System.out.println(varHashMap.get(varList.get(2)));
     }
+    public Integer getUniqueID(LinkedList<String> list, String varname){
+        for(Var var : varList){
+            if( var.identifier.f0.tokenImage.equals(varname)){
+                return varHashMap.get(var);
+            }
+        }
+        return -1;
+    }
+    public void append(int level, String stringToAdd){
+        for (int i = 0; i < level; i++) {
+            output.append("\t");
+        }
+        output.append(stringToAdd);
+    }
+    //
     //
     // Auto class visitors--probably don't need to be overridden.
     //
@@ -90,7 +109,7 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(MainClass n) {
-        output.append("MAIN \n");
+        append(level,"MAIN \n");
         level++;
         n.f0.accept(this);
         n.f1.accept(this);
@@ -110,8 +129,8 @@ public class PigletCreationVisitor implements Visitor {
         n.f15.accept(this);
         n.f16.accept(this);
         n.f17.accept(this);
-        output.append("\nEND\n");
         level--;
+        append(level,"\nEND \n\n");
     }
 
     /**
@@ -138,8 +157,10 @@ public class PigletCreationVisitor implements Visitor {
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
+        currentLocation.add(n.f1.f0.toString());
         n.f3.accept(this);
         n.f4.accept(this);
+        currentLocation.remove(currentLocation.size() - 1);
         n.f5.accept(this);
     }
 
@@ -161,8 +182,10 @@ public class PigletCreationVisitor implements Visitor {
         n.f2.accept(this);
         n.f3.accept(this);
         n.f4.accept(this);
+        currentLocation.add(n.f1.f0.toString());
         n.f5.accept(this);
         n.f6.accept(this);
+        currentLocation.remove(currentLocation.size() - 1);
         n.f7.accept(this);
     }
 
@@ -208,21 +231,31 @@ public class PigletCreationVisitor implements Visitor {
         if (n.f7.nodes != null){
             args += n.f7.nodes.size();
         }
-        output.append(n.f2.f0.tokenImage).append("[ ")
-                .append(args).append(" ]").append("\nBEGIN");
+        append(level, (n.f2.f0.tokenImage));
+        append(0, " [ ");
+        append(0, String.valueOf(args));
+        append(0, " ] ");
+        append(0, "\n");
+        level++;
+        append(level, "BEGIN");
+        level++;
         n.f3.accept(this);
         n.f4.accept(this);
         n.f5.accept(this);
         n.f6.accept(this);
+        currentLocation.add(n.f2.f0.toString());
         n.f7.accept(this);
         n.f8.accept(this);
         n.f9.accept(this);
-        output.append(" RETURN ");
+        append(0, "\n");
+        level--;
+        append(level, "RETURN");
         n.f10.accept(this);
-        output.append(((Identifier)((PrimaryExpression) n.f10.f0.choice).f0.choice).f0.tokenImage);
         n.f11.accept(this);
-        output.append(" END");
+        append(0, " END");
+        currentLocation.remove(currentLocation.size() - 1);
         n.f12.accept(this);
+        level--;
     }
 
     /**
@@ -324,7 +357,9 @@ public class PigletCreationVisitor implements Visitor {
      */
     public void visit(Block n) {
         n.f0.accept(this);
+        currentLocation.add(n.f0.toString());
         n.f1.accept(this);
+        currentLocation.remove(currentLocation.size() - 1);
         n.f2.accept(this);
     }
 
@@ -337,10 +372,15 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(AssignmentStatement n) {
+        append(0, "\n");
+        append(level, "MOVE ");
         n.f0.accept(this);
+        append(0, "TEMP ");
+        append(0, String.valueOf(getUniqueID(currentLocation, n.f0.f0.tokenImage)));
         n.f1.accept(this);
         n.f2.accept(this);
         n.f3.accept(this);
+        append(0, "\n");
     }
 
     /**
@@ -376,13 +416,37 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(IfStatement n) {
+        int jumpFalse = labelNumber++;
+        int jumpEnd = labelNumber++;
+        append(0, "\n");
+        append(level, "CJUMP ");
+        level++;
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
         n.f3.accept(this);
+        append(0, " L");
+        append(0, String.valueOf(jumpFalse));
+        level++;
         n.f4.accept(this);
+        append(level, "JUMP L");
+        append(0, String.valueOf(jumpEnd));
+        level--;
         n.f5.accept(this);
+        append(0, "\n");
+        append(level, "L");
+        append(0, String.valueOf(jumpFalse));
+        level++;
         n.f6.accept(this);
+        level--;
+
+        append(level, "L");
+        append(0, String.valueOf(jumpEnd));
+        level++;
+        append(0, "\n");
+        append(level, "NOOP");
+        level--;
+        level--;
     }
 
     /**
@@ -412,7 +476,7 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(PrintStatement n) {
-        output.append("PRINT ");
+        append(level, "PRINT ");
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
@@ -458,6 +522,7 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(CompareExpression n) {
+        append(0, " LT ");
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
@@ -473,6 +538,7 @@ public class PigletCreationVisitor implements Visitor {
     public void visit(PlusExpression n) {
         n.f0.accept(this);
         n.f1.accept(this);
+        //append(0, " PLUS");
         n.f2.accept(this);
     }
 
@@ -486,6 +552,7 @@ public class PigletCreationVisitor implements Visitor {
     public void visit(MinusExpression n) {
         n.f0.accept(this);
         n.f1.accept(this);
+        //append(0, " MINUS");
         n.f2.accept(this);
     }
 
@@ -499,6 +566,7 @@ public class PigletCreationVisitor implements Visitor {
     public void visit(TimesExpression n) {
         n.f0.accept(this);
         n.f1.accept(this);
+        append(0, " TIMES");
         n.f2.accept(this);
     }
 
@@ -585,6 +653,34 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(PrimaryExpression n) {
+        if(n.f0.choice instanceof IntegerLiteral){
+            append(0," ");
+            append(0,String.valueOf(((IntegerLiteral) n.f0.choice).f0.tokenImage));
+        }
+        if(n.f0.choice instanceof TrueLiteral){
+            throw new RuntimeException("TODO: How to convert boolean to Piglet");
+        }
+        if(n.f0.choice instanceof FalseLiteral){
+            throw new RuntimeException("TODO: How to convert boolean to Piglet");
+        }
+        if(n.f0.choice instanceof Identifier){
+            append(0, " TEMP ");
+            append(0, String.valueOf(getUniqueID(currentLocation,
+                    ((Identifier) n.f0.choice).f0.tokenImage)));
+        }
+        if(n.f0.choice instanceof ThisExpression){
+            //TODO: implement this?
+        }
+        if(n.f0.choice instanceof ArrayAllocationExpression){
+            throw new RuntimeException("TODO: How to do arrays in Piglet");
+        }
+        if(n.f0.choice instanceof AllocationExpression); //ignore
+        if(n.f0.choice instanceof NotExpression){
+            throw new RuntimeException("TODO: How to do NotExpression in Piglet");
+        }
+        if(n.f0.choice instanceof BracketExpression){
+            //throw new RuntimeException("TODO: How to do BracketExpression in Piglet");
+        }
         n.f0.accept(this);
     }
 
@@ -621,6 +717,7 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(Identifier n) {
+        //output.append("\n").append(n.f0.tokenImage);
         n.f0.accept(this);
     }
 
