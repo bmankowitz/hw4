@@ -45,4 +45,16 @@ public class Var {
                 ", parameter= <\t" + parameters.toString() +
                 ">}";
     }
+
+    @Override
+    public int hashCode() {
+        return this.toString().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof Var)
+            return this.toString().equals(obj.toString());
+        else return false;
+    }
 }
