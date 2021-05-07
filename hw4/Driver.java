@@ -23,7 +23,7 @@ public class Driver {
             InputStream in = System.in;
             if (args.length > 0) in = new FileInputStream(args[0]);
             in = new FileInputStream("testPrograms/Factorial.java");
-            //in = new FileInputStream("testPrograms/MoreThan4.java");
+            in = new FileInputStream("testPrograms/MoreThan4.java");
 
 
             MiniJavaParser parser = new MiniJavaParser(in);

@@ -231,7 +231,12 @@ public class PigletCreationVisitor implements Visitor {
         if (n.f7.nodes != null){
             args += n.f7.nodes.size();
         }
-        append(level, (n.f2.f0.tokenImage));
+        //if the return value is something new (IE a literal) add it:
+        if(!(((PrimaryExpression) n.f10.f0.choice).f0.choice instanceof Identifier)) args++;
+        append(0, "\n");
+        append(level, currentLocation.getFirst());
+        append(0, "_");
+        append(0, (n.f2.f0.tokenImage));
         append(0, " [ ");
         append(0, String.valueOf(args));
         append(0, " ] ");
@@ -476,6 +481,7 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(PrintStatement n) {
+        append(0, "\n");
         append(level, "PRINT ");
         n.f0.accept(this);
         n.f1.accept(this);
@@ -538,7 +544,7 @@ public class PigletCreationVisitor implements Visitor {
     public void visit(PlusExpression n) {
         n.f0.accept(this);
         n.f1.accept(this);
-        //append(0, " PLUS");
+        append(0, " PLUS");
         n.f2.accept(this);
     }
 
@@ -552,7 +558,7 @@ public class PigletCreationVisitor implements Visitor {
     public void visit(MinusExpression n) {
         n.f0.accept(this);
         n.f1.accept(this);
-        //append(0, " MINUS");
+        append(0, " MINUS");
         n.f2.accept(this);
     }
 
@@ -609,12 +615,39 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(MessageSend n) {
+        //this is the CALL:
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
+        append(0, "\n");
+        //append(level, "CALL");
+        ///
+//        level++;
+//        append(level, "BEGIN");
+//        level++;
+//        n.f3.accept(this);
+//        n.f4.accept(this);
+//        n.f5.accept(this);
+//        n.f6.accept(this);
+//        currentLocation.add(n.f2.f0.toString());
+//        n.f7.accept(this);
+//        n.f8.accept(this);
+//        n.f9.accept(this);
+//        append(0, "\n");
+//        level--;
+//        append(level, "RETURN");
+//        n.f10.accept(this);
+//        n.f11.accept(this);
+//        append(0, " END");
+        ///
+        level++;
         n.f3.accept(this);
+        append(level, "(");
         n.f4.accept(this);
+        append(0, " )");
         n.f5.accept(this);
+        level--;
+
     }
 
     /**
