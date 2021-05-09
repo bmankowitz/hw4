@@ -18,11 +18,13 @@ public class PigletCreationVisitor implements Visitor {
     HashMap<Var, Integer> varHashMap = new HashMap<>();
     StringBuilder output = new StringBuilder();
     LinkedList<String> currentLocation = new LinkedList<>();
+    public HashMap<LinkedList<String>, ArrayList<Var>> vars;
     int labelNumber = 1;
 
     int level = 0;
-    public PigletCreationVisitor(ArrayList<Var> varList){
+    public PigletCreationVisitor(ArrayList<Var> varList, HashMap<LinkedList<String>, ArrayList<Var>> vars){
         this.varList = varList;
+        this.vars = vars;
         for (int i = 0; i < varList.size(); i++) {
             varHashMap.put(varList.get(i), i);
         }
@@ -44,6 +46,41 @@ public class PigletCreationVisitor implements Visitor {
             output.append("\t");
         }
         output.append(stringToAdd);
+    }
+
+    public Var checkVarExists(LinkedList<String> location, Identifier identifier){
+        //1. Make sure this var exists
+        LinkedList<String> tempLoc = new LinkedList<>(location);
+        while(!tempLoc.isEmpty()){
+            if(vars.get(tempLoc) != null && !vars.get(tempLoc).isEmpty()){
+                for(Var v : vars.get(tempLoc)){
+                    if(v.identifier.f0.tokenImage.equals(identifier.f0.tokenImage)){
+                        //found the Var!
+                        return v;
+                    }
+                }
+            }
+            tempLoc.removeLast();
+        }
+        //reached the root without finding the Var
+        throw new TypeError("Unable to find Var named: " + identifier.f0.tokenImage + " at line "
+                + identifier.f0.beginLine + " column " + identifier.f0.beginColumn);
+    }
+
+    public void generateMethodCall(Var method){
+        boole
+        append(level, "CALL ");
+        level++;
+        append(0, "\n");
+        append(level, "BEGIN ");
+        level++;
+        // how many times to allocate/store:
+        // count the number of methods in the class being called:
+
+
+        output.append(method.toString());
+
+
     }
     //
     //
@@ -224,8 +261,10 @@ public class PigletCreationVisitor implements Visitor {
         n.f1.accept(this);
         n.f2.accept(this);
         int args = 0;
-        if (((FormalParameterList) n.f4.node).f0 != null) args++;
-        if (((FormalParameterList) n.f4.node).f1.nodes != null){
+        if (((FormalParameterList) n.f4.node) != null &&
+                ((FormalParameterList) n.f4.node).f0 != null) args++;
+        if (((FormalParameterList) n.f4.node)!= null &&
+                ((FormalParameterList) n.f4.node).f1.nodes != null){
             args += ((FormalParameterList) n.f4.node).f1.nodes.size();
         }
         if (n.f7.nodes != null){
@@ -621,25 +660,14 @@ public class PigletCreationVisitor implements Visitor {
         n.f2.accept(this);
         append(0, "\n");
         //append(level, "CALL");
-        ///
-//        level++;
-//        append(level, "BEGIN");
-//        level++;
-//        n.f3.accept(this);
-//        n.f4.accept(this);
-//        n.f5.accept(this);
-//        n.f6.accept(this);
-//        currentLocation.add(n.f2.f0.toString());
-//        n.f7.accept(this);
-//        n.f8.accept(this);
-//        n.f9.accept(this);
-//        append(0, "\n");
-//        level--;
-//        append(level, "RETURN");
-//        n.f10.accept(this);
-//        n.f11.accept(this);
-//        append(0, " END");
-        ///
+
+        if( !(n.f0.f0.choice instanceof ThisExpression) &&
+                ((AllocationExpression) n.f0.f0.choice).f1.f0 != null){
+            LinkedList<String> temploc = new LinkedList<>();
+            temploc.add(((AllocationExpression)n.f0.f0.choice).f1.f0.tokenImage);
+            generateMethodCall(checkVarExists(temploc, n.f2));
+        }
+        else generateMethodCall(checkVarExists(currentLocation, n.f2));
         level++;
         n.f3.accept(this);
         append(level, "(");

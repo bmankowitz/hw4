@@ -23,7 +23,8 @@ public class Driver {
             InputStream in = System.in;
             if (args.length > 0) in = new FileInputStream(args[0]);
             in = new FileInputStream("testPrograms/Factorial.java");
-            in = new FileInputStream("testPrograms/MoreThan4.java");
+            //in = new FileInputStream("testPrograms/MoreThan4.java");
+            //in = new FileInputStream("testPrograms/BinaryTree.java");
 
 
             MiniJavaParser parser = new MiniJavaParser(in);
@@ -42,7 +43,7 @@ public class Driver {
             //first get list of vars:
             ArrayList<Var> vars = new ArrayList<>();
             firstPass.vars.values().forEach(vars::addAll);
-            PigletCreationVisitor piglet = new PigletCreationVisitor(new ArrayList<Var>(vars));
+            PigletCreationVisitor piglet = new PigletCreationVisitor(new ArrayList<Var>(vars), firstPass.vars);
             root.accept(piglet);
             System.out.println("Program ok");
         }
