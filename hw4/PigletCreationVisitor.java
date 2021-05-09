@@ -66,19 +66,51 @@ public class PigletCreationVisitor implements Visitor {
         throw new TypeError("Unable to find Var named: " + identifier.f0.tokenImage + " at line "
                 + identifier.f0.beginLine + " column " + identifier.f0.beginColumn);
     }
+    public ArrayList<Var> getVars(LinkedList<String> loc, boolean allowVars){
+        ArrayList<Var> retVal = new ArrayList<>();
+        LinkedList<String> tempLoc = new LinkedList<>(loc);
+        if(vars.get(tempLoc) != null && !vars.get(tempLoc).isEmpty()){
+            for(Var v : vars.get(tempLoc)){
+                if(v.parameters != null || allowVars){
+                    retVal.add(v);
+                }
+            }
+        }
+        return retVal;
+    }
 
-    public void generateMethodCall(Var method){
-
+    public void generateMethodCall(Var method, LinkedList<String> location){
+        int meta_temp = varList.size()+1;
         append(level, "CALL ");
         level++;
         append(0, "\n");
-        append(level, "BEGIN ");
+        append(level, "BEGIN \n");
         level++;
         // how many times to allocate/store:
+        int returnAddr = meta_temp++;
+        append(level, "MOVE TEMP " + returnAddr + "\n");//how do i not hard code this value...
+        level++;
+        append(level, "BEGIN \n");
+        level++;
         // count the number of methods in the class being called:
+        ArrayList<Var> allocations = getVars(location, false);
+        append(level, "MOVE TEMP " + meta_temp + " HALLOCATE " +
+                        (4*allocations.size()) + "\n");//this 4 refers to (# of methods * 4)
+        int offset = (allocations.size()-1)*4;
+        for(Var alloc : allocations){
+            append(level, "HSTORE TEMP " + meta_temp + " " + offset + " " + location.getFirst()
+            + "_" + alloc.identifier.f0.tokenImage + "\n");
+        }
+        append(--level, "RETURN TEMP " +meta_temp+ " END\n" );
+        //HLOADS:
+        append(level, "HLOAD TEMP " +(meta_temp) + " TEMP " + returnAddr + " " + 0+ "\n");
+        //return:
+        level -= 2;
+        append(level, "RETURN TEMP " + meta_temp + " END\n");
+        //params:
+        append(--level, "( TEMP " + returnAddr + " ");
+        //continued in MessageSend!
 
-
-        output.append(method.toString());
         level--;
 
     }
@@ -581,9 +613,9 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(PlusExpression n) {
+        append(0, " PLUS");
         n.f0.accept(this);
         n.f1.accept(this);
-        append(0, " PLUS");
         n.f2.accept(this);
     }
 
@@ -595,9 +627,9 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(MinusExpression n) {
+        append(0, " MINUS");
         n.f0.accept(this);
         n.f1.accept(this);
-        append(0, " MINUS");
         n.f2.accept(this);
     }
 
@@ -609,9 +641,9 @@ public class PigletCreationVisitor implements Visitor {
      * </PRE>
      */
     public void visit(TimesExpression n) {
+        append(0, " TIMES");
         n.f0.accept(this);
         n.f1.accept(this);
-        append(0, " TIMES");
         n.f2.accept(this);
     }
 
@@ -665,12 +697,12 @@ public class PigletCreationVisitor implements Visitor {
                 ((AllocationExpression) n.f0.f0.choice).f1.f0 != null){
             LinkedList<String> temploc = new LinkedList<>();
             temploc.add(((AllocationExpression)n.f0.f0.choice).f1.f0.tokenImage);
-            generateMethodCall(checkVarExists(temploc, n.f2));
+            generateMethodCall(checkVarExists(temploc, n.f2), temploc);
         }
-        else generateMethodCall(checkVarExists(currentLocation, n.f2));
+        else generateMethodCall(checkVarExists(currentLocation, n.f2), currentLocation);
         level++;
         n.f3.accept(this);
-        append(level, "(");
+        //append(level, "(");
         n.f4.accept(this);
         append(0, " )");
         n.f5.accept(this);
