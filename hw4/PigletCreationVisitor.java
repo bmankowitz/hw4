@@ -68,7 +68,7 @@ public class PigletCreationVisitor implements Visitor {
     }
 
     public void generateMethodCall(Var method){
-        boole
+
         append(level, "CALL ");
         level++;
         append(0, "\n");
@@ -79,7 +79,7 @@ public class PigletCreationVisitor implements Visitor {
 
 
         output.append(method.toString());
-
+        level--;
 
     }
     //
