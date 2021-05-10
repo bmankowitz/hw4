@@ -21,15 +21,17 @@ public class PigletCreationVisitor implements Visitor {
     LinkedList<String> currentLocation = new LinkedList<>();
     public HashMap<LinkedList<String>, ArrayList<Var>> vars;
     int labelNumber = 1;
+    int meta_temp;
 
     int level = 0;
     public PigletCreationVisitor(ArrayList<Var> varList, HashMap<LinkedList<String>, ArrayList<Var>> vars){
         this.varList = varList;
         this.vars = vars;
+        meta_temp = varList.size()+1;
         System.out.println("------------------------------------------------------------------------------------");
         for (int i = 0; i < varList.size(); i++) {
-            varHashMap.put(varList.get(i), i);
-            System.out.print("TEMP " +i+" --> ");
+            varHashMap.put(varList.get(i), i+1);
+            System.out.print("TEMP " +(i+1)+" --> ");
             for(Map.Entry entry : vars.entrySet()){
                 for(Var var : (ArrayList<Var>)entry.getValue())
                     if (var.equals(varList.get(i)))
@@ -85,8 +87,8 @@ public class PigletCreationVisitor implements Visitor {
         return retVal;
     }
 
-    public void generateMethodCall(Var method, LinkedList<String> location){
-        int meta_temp = varList.size()+1;
+    public void generateMethodCall(Var method, LinkedList<String> location, boolean allocExpr){
+        meta_temp *= 2;
         append(level, "CALL ");
         level++;
         append(0, "\n");
@@ -94,33 +96,39 @@ public class PigletCreationVisitor implements Visitor {
         level++;
         // how many times to allocate/store:
         int returnAddr = meta_temp++;
-        append(level, "MOVE TEMP " + returnAddr + "\n");//how do i not hard code this value...
-        level++;
-        append(level, "BEGIN \n");
-        level++;
-        // count the number of methods in the class being called:
-        ArrayList<Var> allocations = getVars(location, false);
-        append(level, "MOVE TEMP " + meta_temp + " HALLOCATE " +
-                        (4*allocations.size()) + "\n");//this 4 refers to (# of methods * 4)
+        int hload_1 = meta_temp + 16;
+        append(level, "MOVE TEMP " + returnAddr);//how do i not hard code this value...
+        if(!allocExpr) append(0, " TEMP 0\n");
+        if(allocExpr) {
+            append(0, "\n");
+            level++;
+            append(level, "BEGIN \n");
+            level++;
+            // count the number of methods in the class being called:
+            ArrayList<Var> allocations = getVars(location, false);
+            append(level, "MOVE TEMP " + meta_temp + " HALLOCATE " +
+                    (4 * allocations.size()) + "\n");//this 4 refers to (# of methods * 4)
 
-        // 4 bytes for the address
-        int address = meta_temp + 1;
-        append(level, "MOVE TEMP " + address + " HALLOCATE" + " 4\n");//TODO: is this always 4??
+            // 4 bytes for the address
+            int address = meta_temp + 1;
+            append(level, "MOVE TEMP " + address + " HALLOCATE" + " 4\n");//TODO: is this always 4??
 
-        int offset = (allocations.size()-1)*4;
-        for(Var alloc : allocations){
-            append(level, "HSTORE TEMP " + meta_temp + " " + offset + " " + location.getFirst()
-            + "_" + alloc.identifier.f0.tokenImage + "\n");
-            offset -= 4;
+            int offset = (allocations.size() - 1) * 4;
+            for (int i = allocations.size()-1; i >= 0; i--) {
+                append(level, "HSTORE TEMP " + meta_temp + " " + offset + " " + location.getFirst()
+                        + "_" + allocations.get(i).identifier.f0.tokenImage + "\n");
+                offset -= 4;
+            }
+
+            // put one in the other
+            append(level, "HSTORE TEMP " + address + " 0 TEMP " + meta_temp++ + "\n");
+
+            append(--level, "RETURN TEMP " + meta_temp + " END\n");
+            //HLOADS:
         }
+        hload_1 = meta_temp + 16;
+        append(level, "HLOAD TEMP " + (hload_1) + " TEMP " + returnAddr + " " + 0 + "\n");
 
-        // put one in the other
-        append(level, "HSTORE TEMP " + address + " 0 TEMP " + meta_temp++ + "\n");
-
-        append(--level, "RETURN TEMP " +meta_temp+ " END\n" );
-        //HLOADS:
-        int hload_1 = meta_temp +16;
-        append(level, "HLOAD TEMP " +(hload_1) + " TEMP " + returnAddr + " " + 0+ "\n");
         //return:
         // NEW CODE
         int switchero = hload_1 + 1;
@@ -312,26 +320,38 @@ public class PigletCreationVisitor implements Visitor {
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
-        int args = 0;
+        ArrayList<Var> args = new ArrayList<>();
+        LinkedList<String> temporaryLocation = new LinkedList<>();
+        temporaryLocation.addAll(currentLocation);
+        temporaryLocation.add(n.f2.f0.toString());
         if (((FormalParameterList) n.f4.node) != null &&
-                ((FormalParameterList) n.f4.node).f0 != null) args++;
+                ((FormalParameterList) n.f4.node).f0 != null){
+            Var varToAdd = checkVarExists(temporaryLocation, ((FormalParameterList) n.f4.node).f0.f1);
+            args.add(varToAdd);
+        }
         if (((FormalParameterList) n.f4.node)!= null &&
                 ((FormalParameterList) n.f4.node).f1.nodes != null){
-            args += ((FormalParameterList) n.f4.node).f1.nodes.size();
+            for(Node node : ((FormalParameterList) n.f4.node).f1.nodes){
+                Var varToAdd = checkVarExists(temporaryLocation, ((FormalParameterRest) node).f1.f1);
+                args.add(varToAdd);
+            }
+
         }
         //and add one for the implicit param:
-        args++;
         append(0, "\n");
         append(level, currentLocation.getFirst());
         append(0, "_");
         append(0, (n.f2.f0.tokenImage));
         append(0, " [ ");
-        append(0, String.valueOf(args));
+        append(0, String.valueOf(args.size()+1));
         append(0, " ] ");
         append(0, "\n");
         level++;
         append(level, "BEGIN");
         level++;
+        for(Var arg : args){
+            //append(level, "\nMOVE TEMP " + );
+        }
         n.f3.accept(this);
         n.f4.accept(this);
         n.f5.accept(this);
@@ -714,13 +734,13 @@ public class PigletCreationVisitor implements Visitor {
                 ((AllocationExpression) n.f0.f0.choice).f1.f0 != null){
             LinkedList<String> temploc = new LinkedList<>();
             temploc.add(((AllocationExpression)n.f0.f0.choice).f1.f0.tokenImage);
-            generateMethodCall(checkVarExists(temploc, n.f2), temploc);
+            generateMethodCall(checkVarExists(temploc, n.f2), temploc, true);
         }
         else if(n.f0.f0.choice instanceof Identifier){
             generateMethodCall(checkVarExists(currentLocation,
-                    (Identifier) n.f0.f0.choice), currentLocation);
+                    (Identifier) n.f0.f0.choice), currentLocation, false);
         }
-        else generateMethodCall(checkVarExists(currentLocation, n.f2), currentLocation);
+        else generateMethodCall(checkVarExists(currentLocation, n.f2), currentLocation, false);
         level++;
         n.f3.accept(this);
         //append(level, "(");
