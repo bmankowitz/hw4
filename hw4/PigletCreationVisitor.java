@@ -5,6 +5,7 @@
 package hw4;
 import minijava.syntaxtree.*;
 
+import java.time.temporal.ValueRange;
 import java.util.*;
 import hw3.*;
 import minijava.visitor.Visitor;
@@ -25,16 +26,21 @@ public class PigletCreationVisitor implements Visitor {
     public PigletCreationVisitor(ArrayList<Var> varList, HashMap<LinkedList<String>, ArrayList<Var>> vars){
         this.varList = varList;
         this.vars = vars;
+        System.out.println("------------------------------------------------------------------------------------");
         for (int i = 0; i < varList.size(); i++) {
             varHashMap.put(varList.get(i), i);
+            System.out.print("TEMP " +i+" --> ");
+            for(Map.Entry entry : vars.entrySet()){
+                for(Var var : (ArrayList<Var>)entry.getValue())
+                    if (var.equals(varList.get(i)))
+                        System.out.println(entry.getKey().toString() + " " + var.identifier.f0.tokenImage);
+            }
         }
-        System.out.println("------------------------------------------------------------------------------------");
-        varList.forEach(x -> System.out.println(x.hashCode()));
         System.out.println("------------------------------------------------------------------------------------");
         System.out.println(varHashMap.get(varList.get(2)));
     }
     public Integer getUniqueID(LinkedList<String> list, String varname){
-        for(Var var : varList){
+        for(Var var : getVars(list, true)){
             if( var.identifier.f0.tokenImage.equals(varname)){
                 return varHashMap.get(var);
             }
@@ -313,11 +319,8 @@ public class PigletCreationVisitor implements Visitor {
                 ((FormalParameterList) n.f4.node).f1.nodes != null){
             args += ((FormalParameterList) n.f4.node).f1.nodes.size();
         }
-        if (n.f7.nodes != null){
-            args += n.f7.nodes.size();
-        }
-        //if the return value is something new (IE a literal) add it:
-        if(!(((PrimaryExpression) n.f10.f0.choice).f0.choice instanceof Identifier)) args++;
+        //and add one for the implicit param:
+        args++;
         append(0, "\n");
         append(level, currentLocation.getFirst());
         append(0, "_");
@@ -470,7 +473,6 @@ public class PigletCreationVisitor implements Visitor {
         n.f1.accept(this);
         n.f2.accept(this);
         n.f3.accept(this);
-        append(0, "\n");
     }
 
     /**
@@ -519,8 +521,9 @@ public class PigletCreationVisitor implements Visitor {
         append(0, String.valueOf(jumpFalse));
         level++;
         n.f4.accept(this);
+        append(0, "\n");
         append(level, "JUMP L");
-        append(0, String.valueOf(jumpEnd));
+        append(0, jumpEnd + "");
         level--;
         n.f5.accept(this);
         append(0, "\n");
@@ -707,11 +710,15 @@ public class PigletCreationVisitor implements Visitor {
         append(0, "\n");
         //append(level, "CALL");
 
-        if( !(n.f0.f0.choice instanceof ThisExpression) &&
+        if( (n.f0.f0.choice instanceof AllocationExpression) &&
                 ((AllocationExpression) n.f0.f0.choice).f1.f0 != null){
             LinkedList<String> temploc = new LinkedList<>();
             temploc.add(((AllocationExpression)n.f0.f0.choice).f1.f0.tokenImage);
             generateMethodCall(checkVarExists(temploc, n.f2), temploc);
+        }
+        else if(n.f0.f0.choice instanceof Identifier){
+            generateMethodCall(checkVarExists(currentLocation,
+                    (Identifier) n.f0.f0.choice), currentLocation);
         }
         else generateMethodCall(checkVarExists(currentLocation, n.f2), currentLocation);
         level++;
@@ -720,7 +727,6 @@ public class PigletCreationVisitor implements Visitor {
         n.f4.accept(this);
         append(0, " )");
         n.f5.accept(this);
-        level--;
 
     }
 
@@ -765,10 +771,14 @@ public class PigletCreationVisitor implements Visitor {
             append(0,String.valueOf(((IntegerLiteral) n.f0.choice).f0.tokenImage));
         }
         if(n.f0.choice instanceof TrueLiteral){
-            throw new RuntimeException("TODO: How to convert boolean to Piglet");
+            //TODO: Replace with integer value?
+            append(0, " 1 ");
+            //throw new RuntimeException("TODO: How to convert boolean to Piglet");
         }
         if(n.f0.choice instanceof FalseLiteral){
-            throw new RuntimeException("TODO: How to convert boolean to Piglet");
+            append(0, " 0 ");
+            //System.out.println(output.toString());
+            //throw new RuntimeException("TODO: How to convert boolean to Piglet");
         }
         if(n.f0.choice instanceof Identifier){
             append(0, " TEMP ");
@@ -783,7 +793,9 @@ public class PigletCreationVisitor implements Visitor {
         }
         if(n.f0.choice instanceof AllocationExpression); //ignore
         if(n.f0.choice instanceof NotExpression){
-            throw new RuntimeException("TODO: How to do NotExpression in Piglet");
+            append(0, " MINUS 1 ");
+            //System.out.println(output.toString());
+            //throw new RuntimeException("TODO: How to do NotExpression in Piglet");
         }
         if(n.f0.choice instanceof BracketExpression){
             //throw new RuntimeException("TODO: How to do BracketExpression in Piglet");
