@@ -20,8 +20,11 @@ public class PigletCreationVisitor implements Visitor {
     StringBuilder output = new StringBuilder();
     LinkedList<String> currentLocation = new LinkedList<>();
     public HashMap<LinkedList<String>, ArrayList<Var>> vars;
+    ArrayList<Var> currentArgs = new ArrayList<>();
     int labelNumber = 1;
     int meta_temp;
+    int futureOffset = -4;
+
 
     int level = 0;
     public PigletCreationVisitor(ArrayList<Var> varList, HashMap<LinkedList<String>, ArrayList<Var>> vars){
@@ -30,8 +33,8 @@ public class PigletCreationVisitor implements Visitor {
         meta_temp = varList.size()+1;
         System.out.println("------------------------------------------------------------------------------------");
         for (int i = 0; i < varList.size(); i++) {
-            varHashMap.put(varList.get(i), i+1);
-            System.out.print("TEMP " +(i+1)+" --> ");
+            varHashMap.put(varList.get(i), i+5);
+            System.out.print("TEMP " +(i+5)+" --> ");
             for(Map.Entry entry : vars.entrySet()){
                 for(Var var : (ArrayList<Var>)entry.getValue())
                     if (var.equals(varList.get(i)))
@@ -118,6 +121,7 @@ public class PigletCreationVisitor implements Visitor {
                 append(level, "HSTORE TEMP " + meta_temp + " " + offset + " " + location.getFirst()
                         + "_" + allocations.get(i).identifier.f0.tokenImage + "\n");
                 offset -= 4;
+                futureOffset += 4;
             }
 
             // put one in the other
@@ -132,7 +136,11 @@ public class PigletCreationVisitor implements Visitor {
         //return:
         // NEW CODE
         int switchero = hload_1 + 1;
-        append(level, "HLOAD TEMP " + (switchero) + " TEMP " + hload_1 + " 0\n");
+        //Offset:
+        int offset2 = futureOffset;
+        if(futureOffset < 0) offset2=0;
+        if(allocExpr) offset2=0;
+        append(level, "HLOAD TEMP " + (switchero) + " TEMP " + hload_1 + " " +offset2+"\n");
         level -= 2;
         append(level, "RETURN TEMP " + switchero + " END\n");
         //params:
@@ -335,8 +343,9 @@ public class PigletCreationVisitor implements Visitor {
                 Var varToAdd = checkVarExists(temporaryLocation, ((FormalParameterRest) node).f1.f1);
                 args.add(varToAdd);
             }
-
         }
+        //assign the params:
+        args.forEach(x -> varHashMap.put(x, args.indexOf(x)+1));
         //and add one for the implicit param:
         append(0, "\n");
         append(level, currentLocation.getFirst());

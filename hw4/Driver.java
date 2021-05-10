@@ -22,9 +22,15 @@ public class Driver {
         try {
             InputStream in = System.in;
             if (args.length > 0) in = new FileInputStream(args[0]);
-            in = new FileInputStream("testPrograms/Factorial.java");
-            in = new FileInputStream("testPrograms/MoreThan4.java");
-            in = new FileInputStream("testPrograms/BinaryTree.java");
+            int toTest = 3;
+            if(toTest == 0) in = new FileInputStream("testPrograms/BinaryTree.java");
+            else if (toTest ==1 )in = new FileInputStream("testPrograms/BubbleSort.java");
+            else if (toTest ==2 )in = new FileInputStream("testPrograms/Factorial.java");
+            else if (toTest ==3 )in = new FileInputStream("testPrograms/LinearSearch.java");
+            else if (toTest ==4 )in = new FileInputStream("testPrograms/LinkedList.java");
+            else if (toTest ==5 )in = new FileInputStream("testPrograms/MoreThan4.java");
+            else if (toTest ==6 )in = new FileInputStream("testPrograms/QuickSort.java");
+            else if (toTest ==7 )in = new FileInputStream("testPrograms/TreeVisitor.java");
 
 
             MiniJavaParser parser = new MiniJavaParser(in);
@@ -48,7 +54,7 @@ public class Driver {
             //Run the program through the Piglet Interpreter:
 
             try {
-                System.out.println("RESULTS:::");
+                System.out.println("\n\n\nRESULTS:::");
                 Process proc = Runtime.getRuntime().exec(
                         "java -jar \"Piglet-documentatino/Piglet Interpreter/pgi.jar\" < \"Piglet-documentatino/Piglet Programs/Factorial.pg \"");
                 //proc.waitFor();
