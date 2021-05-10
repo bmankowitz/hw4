@@ -96,17 +96,31 @@ public class PigletCreationVisitor implements Visitor {
         ArrayList<Var> allocations = getVars(location, false);
         append(level, "MOVE TEMP " + meta_temp + " HALLOCATE " +
                         (4*allocations.size()) + "\n");//this 4 refers to (# of methods * 4)
+
+        // 4 bytes for the address
+        int address = meta_temp + 1;
+        append(level, "MOVE TEMP " + address + " HALLOCATE" + " 4\n");//TODO: is this always 4??
+
         int offset = (allocations.size()-1)*4;
         for(Var alloc : allocations){
             append(level, "HSTORE TEMP " + meta_temp + " " + offset + " " + location.getFirst()
             + "_" + alloc.identifier.f0.tokenImage + "\n");
+            offset -= 4;
         }
+
+        // put one in the other
+        append(level, "HSTORE TEMP " + address + " 0 TEMP " + meta_temp++ + "\n");
+
         append(--level, "RETURN TEMP " +meta_temp+ " END\n" );
         //HLOADS:
-        append(level, "HLOAD TEMP " +(meta_temp) + " TEMP " + returnAddr + " " + 0+ "\n");
+        int hload_1 = meta_temp +16;
+        append(level, "HLOAD TEMP " +(hload_1) + " TEMP " + returnAddr + " " + 0+ "\n");
         //return:
+        // NEW CODE
+        int switchero = hload_1 + 1;
+        append(level, "HLOAD TEMP " + (switchero) + " TEMP " + hload_1 + " 0\n");
         level -= 2;
-        append(level, "RETURN TEMP " + meta_temp + " END\n");
+        append(level, "RETURN TEMP " + switchero + " END\n");
         //params:
         append(--level, "( TEMP " + returnAddr + " ");
         //continued in MessageSend!

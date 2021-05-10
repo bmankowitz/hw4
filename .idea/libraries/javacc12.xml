@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="javacc1">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/javacc-javacc-7.0.9/bootstrap/javacc.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
