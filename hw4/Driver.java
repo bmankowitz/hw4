@@ -18,11 +18,12 @@ import piglet.parser.PigletParser;
 import piglet.syntaxtree.*;
 
 public class Driver {
+    public static final boolean debug = false;
     public static void main(String[] args) {
         try {
             InputStream in = System.in;
             if (args.length > 0) in = new FileInputStream(args[0]);
-            int toTest = 3;
+            int toTest = 6;
             if(toTest == 0) in = new FileInputStream("testPrograms/BinaryTree.java");
             else if (toTest ==1 )in = new FileInputStream("testPrograms/BubbleSort.java");
             else if (toTest ==2 )in = new FileInputStream("testPrograms/Factorial.java");
@@ -31,18 +32,15 @@ public class Driver {
             else if (toTest ==5 )in = new FileInputStream("testPrograms/MoreThan4.java");
             else if (toTest ==6 )in = new FileInputStream("testPrograms/QuickSort.java");
             else if (toTest ==7 )in = new FileInputStream("testPrograms/TreeVisitor.java");
+            else { /* Use standard in*/};
 
 
             MiniJavaParser parser = new MiniJavaParser(in);
-            //PigletParser pigletParser = new PigletParser(in);
-            //piglet.syntaxtree.Goal pigletGoal = pigletParser.Goal();
-
-
             Goal root = parser.Goal();
-            System.out.println("Parsed successfully");
+            if(debug) System.out.println("Parsed successfully");
             TreeBuildingVisitor firstPass = new TreeBuildingVisitor();
             root.accept(firstPass);
-            firstPass.printVars();
+            if(debug) firstPass.printVars();
             TreeCheckingVisitor secondPass = new TreeCheckingVisitor(firstPass.vars);
             root.accept(secondPass);
             //create IR
@@ -51,25 +49,6 @@ public class Driver {
             firstPass.vars.values().forEach(vars::addAll);
             PigletCreationVisitor piglet = new PigletCreationVisitor(new ArrayList<Var>(vars), firstPass.vars);
             root.accept(piglet);
-            //Run the program through the Piglet Interpreter:
-
-            try {
-                System.out.println("\n\n\nRESULTS:::");
-                Process proc = Runtime.getRuntime().exec(
-                        "java -jar \"Piglet-documentatino/Piglet Interpreter/pgi.jar\" < \"Piglet-documentatino/Piglet Programs/Factorial.pg \"");
-                //proc.waitFor();
-                // Then retreive the process output
-                InputStream in2 = proc.getInputStream();
-                InputStream err = proc.getErrorStream();
-
-                byte b[] = new byte[in2.available()];
-                in2.read(b, 0, b.length);
-                System.out.println(new String(b));
-
-                byte c[] = new byte[err.available()];
-                err.read(c, 0, c.length);
-                System.out.println(new String(c));
-            } catch (Exception e) { e.printStackTrace();};
         }
         catch (ParseException pe) {
             System.out.println("Parse error: " + pe.getMessage());

@@ -31,24 +31,29 @@ public class PigletCreationVisitor implements Visitor {
         this.varList = varList;
         this.vars = vars;
         meta_temp = varList.size()+1;
-        System.out.println("------------------------------------------------------------------------------------");
+        if(Driver.debug) System.out.println("------------------------------------------------------------------------------------");
         for (int i = 0; i < varList.size(); i++) {
             varHashMap.put(varList.get(i), i+5);
-            System.out.print("TEMP " +(i+5)+" --> ");
+            if(Driver.debug) System.out.print("TEMP " +(i+5)+" --> ");
             for(Map.Entry entry : vars.entrySet()){
                 for(Var var : (ArrayList<Var>)entry.getValue())
                     if (var.equals(varList.get(i)))
-                        System.out.println(entry.getKey().toString() + " " + var.identifier.f0.tokenImage);
+                        if(Driver.debug) System.out.println(entry.getKey().toString() + " " + var.identifier.f0.tokenImage);
             }
         }
-        System.out.println("------------------------------------------------------------------------------------");
-        System.out.println(varHashMap.get(varList.get(2)));
+        if(Driver.debug) System.out.println("------------------------------------------------------------------------------------");
+        if(Driver.debug) System.out.println(varHashMap.get(varList.get(2)));
     }
     public Integer getUniqueID(LinkedList<String> list, String varname){
-        for(Var var : getVars(list, true)){
-            if( var.identifier.f0.tokenImage.equals(varname)){
-                return varHashMap.get(var);
+        LinkedList<String> templist3 = new LinkedList<>();
+        templist3.addAll(list);
+        while(!templist3.isEmpty()) {
+            for (Var var : getVars(templist3, true)) {
+                if (var.identifier.f0.tokenImage.equals(varname)) {
+                    return varHashMap.get(var);
+                }
             }
+            templist3.removeLast();
         }
         return -1;
     }
@@ -802,12 +807,10 @@ public class PigletCreationVisitor implements Visitor {
         if(n.f0.choice instanceof TrueLiteral){
             //TODO: Replace with integer value?
             append(0, " 1 ");
-            //throw new RuntimeException("TODO: How to convert boolean to Piglet");
         }
         if(n.f0.choice instanceof FalseLiteral){
             append(0, " 0 ");
-            //System.out.println(output.toString());
-            //throw new RuntimeException("TODO: How to convert boolean to Piglet");
+
         }
         if(n.f0.choice instanceof Identifier){
             append(0, " TEMP ");
@@ -818,16 +821,14 @@ public class PigletCreationVisitor implements Visitor {
             //TODO: implement this?
         }
         if(n.f0.choice instanceof ArrayAllocationExpression){
+            //add every array
             throw new RuntimeException("TODO: How to do arrays in Piglet");
         }
         if(n.f0.choice instanceof AllocationExpression); //ignore
         if(n.f0.choice instanceof NotExpression){
             append(0, " MINUS 1 ");
-            //System.out.println(output.toString());
-            //throw new RuntimeException("TODO: How to do NotExpression in Piglet");
         }
         if(n.f0.choice instanceof BracketExpression){
-            //throw new RuntimeException("TODO: How to do BracketExpression in Piglet");
         }
         n.f0.accept(this);
     }

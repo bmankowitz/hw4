@@ -22,12 +22,6 @@ public class TreeBuildingVisitor implements Visitor {
         currentVars.add(var);
         vars.put(tempLoc, currentVars);
         currentVars = null;
-//        if (var.parameters == null) System.out.println("Added " + var.type.f0.choice.toString() + " " + var.identifier.f0.toString() +
-//                " at location: " + location.toString());
-//        else System.out.println("Added method " + var.type.f0.choice.toString() + " " + var.identifier.f0.toString() +
-//                "with params < " + var.parameters.toString() + "> at location: " + location.toString());
-//        System.out.println(vars);
-//        System.out.println(currentLocation);
     }
     public void printVars(){
         for(Map.Entry entry : vars.entrySet()){
