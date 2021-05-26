@@ -23,7 +23,7 @@ public class Driver {
         try {
             InputStream in = System.in;
             if (args.length > 0) in = new FileInputStream(args[0]);
-            int toTest = 6;
+            int toTest = 8;
             if(toTest == 0) in = new FileInputStream("testPrograms/BinaryTree.java");
             else if (toTest ==1 )in = new FileInputStream("testPrograms/BubbleSort.java");
             else if (toTest ==2 )in = new FileInputStream("testPrograms/Factorial.java");
